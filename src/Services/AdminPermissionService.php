@@ -20,6 +20,23 @@ class AdminPermissionService extends AdminService
         $this->modelName = Admin::adminPermissionModel();
     }
 
+
+    public function query()
+    {
+        $query =  parent::query();
+        //非超级管理员,列表不展示超级管理员
+        $user = Admin::user();
+        if (!$user->isAdministrator()) {
+            $query->leftjoin('admin_role_users', 'admin_role_users.user_id', '=', 'admin_users.id')
+                ->leftjoin('admin_roles', 'admin_roles.id', '=', 'admin_role_users.role_id')
+                ->where('admin_roles.slug', '!=', 'administrator')
+                // ->where('admin_role_users.role_id', '!=', 1)
+                ->select('admin_users.*');
+        }
+
+        return $query;
+    }
+
     public function getTree()
     {
         $list = $this->query()->orderBy('custom_order')->get()->toArray();

@@ -127,6 +127,11 @@ class Menu
         return $this;
     }
 
+    public function getMenus()
+    {
+        return  $this->menus;
+    }
+
     public function formatItem($item)
     {
         return array_merge([
@@ -166,7 +171,10 @@ class Menu
         }
 
         if (Admin::config('admin.show_development_tools')) {
-            $extraMenus = array_merge($extraMenus, $this->devToolMenus());
+            $user = Admin::user();
+            if ($user->isAdministrator() || Admin::config('admin.auth.permission') === false) {
+                $extraMenus = array_merge($extraMenus, $this->devToolMenus());
+            }
         }
 
         return $extraMenus;

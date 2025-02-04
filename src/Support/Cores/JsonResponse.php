@@ -47,7 +47,7 @@ class JsonResponse
         return $this->json($data);
     }
 
-    private function json($data)
+    protected function json($data)
     {
         if (config('app.debug')) {
             $this->additionalData['_debug'] = [

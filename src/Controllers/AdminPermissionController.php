@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Slowlyo\OwlAdmin\Renderers\Tag;
 use Slowlyo\OwlAdmin\Services\AdminMenuService;
 use Slowlyo\OwlAdmin\Services\AdminPermissionService;
+use Slowlyo\OwlAdmin\Support\Cores\Menu;
 
 /**
  * @property AdminPermissionService $service
@@ -157,9 +158,15 @@ class AdminPermissionController extends AdminController
     public function autoGenerate()
     {
         $menus       = Admin::adminMenuModel()::query()->get()->toArray();
+
+        //自定义菜单添加合并
+        $customMenus = Admin::menu()->getMenus();
+        $menus       = array_merge($menus, $customMenus);
+
         $slugMap     = Admin::adminPermissionModel()::query()->get(['id', 'slug'])->keyBy('id')->toArray();
         $slugCache   = [];
         $permissions = [];
+        $menu_index = 9000;
         foreach ($menus as $menu) {
             $_httpPath =
                 $menu['url_type'] == Admin::adminMenuModel()::TYPE_ROUTE ? $this->getHttpPath($menu['url']) : '';
@@ -183,14 +190,14 @@ class AdminPermissionController extends AdminController
             $slugCache[] = $slug;
 
             $permissions[] = [
-                'id'           => $menu['id'],
+                'id'           => $menu['id'] ??  ++$menu_index,
                 'name'         => $menuTitle,
                 'slug'         => data_get($slugMap, $menu['id'] . '.slug') ?: $slug,
                 'http_path'    => json_encode($_httpPath ? [$_httpPath] : ''),
-                'custom_order' => $menu['custom_order'],
-                'parent_id'    => $menu['parent_id'],
-                'created_at'   => $menu['created_at'],
-                'updated_at'   => $menu['updated_at'],
+                'custom_order' => $menu['custom_order'] ?? 1000,
+                'parent_id'    => $menu['parent_id'] ?? 0,
+                'created_at'   => $menu['created_at'] ?? date('Y-m-d H:i:s'),
+                'updated_at'   => $menu['updated_at'] ?? date('Y-m-d H:i:s'),
             ];
         }
 
@@ -224,7 +231,7 @@ class AdminPermissionController extends AdminController
         );
     }
 
-    private function getHttpPath($uri)
+    protected function getHttpPath($uri)
     {
         $excepts = ['/', '', '-'];
         if (in_array($uri, $excepts)) {
